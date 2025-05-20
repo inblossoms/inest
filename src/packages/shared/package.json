@@ -1,0 +1,21 @@
+{
+   "name": "@inest/shared",
+   "version": "1.0.0",
+   "private": true,
+   "main": "../../apps/main.ts",
+   "scripts": {
+      "build": "tsc",
+      "dev": "tsc -w"
+   },
+   "keywords": [],
+   "author": "",
+   "license": "ISC",
+   "dependencies": {
+      "@inest/common": "workspace:*",
+      "@inest/core": "workspace:*",
+      "reflect-metadata": "^0.1.13"
+   },
+   "devDependencies": {
+      "typescript": "^5.0.0"
+   }
+}
