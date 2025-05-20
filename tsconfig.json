@@ -1,0 +1,37 @@
+{
+	"compilerOptions": {
+		"module": "CommonJS",
+		"declaration": true,
+		"removeComments": true,
+		// 该特性执行 stage0 1 2 三个阶段
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"allowSyntheticDefaultImports": true,
+		"target": "ESNext",
+		"sourceMap": true,
+		"outDir": "./dist",
+		"incremental": true,
+		"skipLibCheck": true,
+		"strictNullChecks": false,
+		"noImplicitAny": false,
+		"strictBindCallApply": false,
+		"forceConsistentCasingInFileNames": false,
+		"noFallthroughCasesInSwitch": false,
+		"moduleResolution": "node", // Reflect-metadata
+		"baseUrl": "./src",
+		"paths": {
+			"@/*": [
+				"*"
+			]
+		},
+		"typeRoots": [
+			"./node_modules/@types",
+			"./src/types"
+		],
+		"types": [
+			"node",
+			"express",
+			"express-session"
+		]
+	}
+}
