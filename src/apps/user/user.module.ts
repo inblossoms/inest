@@ -10,13 +10,13 @@ import { NewsModule } from "../news/news.module";
          useValue: "Roy !",
       },
       {
-         provide: "USERSERVICE", // token: 可以理解为 provider name
-         useValue: new UserSerivce(), // 如果提供的是值会直接使用该值，如果是一个类 将会对该类进行实例化
+         provide: "USERSERVICE",
+         useValue: new UserSerivce(),
       },
       {
          provide: "HOBBYSERVICE",
+         useFactory: (x: string, y: string) => new HobbyService(x, y),
          inject: ["Dancer", "PEOPLE"],
-         useFactory: (x, y) => new HobbyService(x, y),
       },
    ],
    exports: ["PEOPLE", "USERSERVICE", "HOBBYSERVICE", NewsModule],

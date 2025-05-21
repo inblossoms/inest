@@ -1,10 +1,14 @@
-import { Module } from "../packages/common/index";
-import { AppController } from "./app.controller"; // router
-import { AppSerivce } from "./app.service";
 import { UserModule } from "./user/user.module";
-import { ProductsModule } from "./products/pruducts.module";
-import { DatabaseModule as DynamicModule } from "./dynamic/dynamic-config.module";
+import { ProductsModule } from "./products/products.module";
+import { NestModule } from "@/packages/common/interfaces/nest-module.interface";
+import { Module } from "../packages/common/index";
+import { MiddlewareConsumer } from "@/packages/common/interfaces/middleware";
+import { LoggerMiddleware } from "./middleware/logger.middleware";
 import { DynamicSerivce } from "./dynamic/dynamic.service";
+import { DatabaseModule as DynamicModule } from "./dynamic/dynamic-config.module";
+import { AppSerivce } from "./app.service";
+import { AppController } from "./app.controller"; // router
+import { RequestMethod } from "@/packages/common/enums";
 
 @Module({
    imports: [
@@ -31,4 +35,12 @@ import { DynamicSerivce } from "./dynamic/dynamic.service";
       DynamicSerivce,
    ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+   configure(consumer: MiddlewareConsumer) {
+      //   consumer.apply(LoggerMiddleware).forRoutes("App");
+      consumer.apply(LoggerMiddleware).forRoutes({
+         path: "middleware",
+         method: RequestMethod.GET,
+      });
+   }
+}

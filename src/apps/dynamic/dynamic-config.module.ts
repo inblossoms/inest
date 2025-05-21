@@ -12,21 +12,14 @@ import { createDatabaseProviders } from "./database.providers";
    exports: ["META"],
 })
 export class DatabaseModule {
-   static forRoot(
-      entities = [],
-      options?
-   ): DynamicModule | Promise<DynamicModule> {
+   static forRoot(entities = [], options?): DynamicModule {
       const providers = createDatabaseProviders(entities, options);
-      return new Promise((resolve, reject) =>
-         setTimeout(() => {
-            return {
-               module: DatabaseModule,
-               providers: providers,
-               exports: providers.map((provider) =>
-                  provider instanceof Function ? provider : provider.provide
-               ),
-            };
-         }, 1000)
-      );
+      return {
+         module: DatabaseModule,
+         providers: providers,
+         exports: providers.map((provider) =>
+            provider instanceof Function ? provider : provider.provide
+         ),
+      };
    }
 }

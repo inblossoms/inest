@@ -19,6 +19,25 @@ export class Logger {
 
       this.lastLogTime = currentTime;
    }
+
+   static error(message: string, trace: string = "", context: string = "") {
+      const timestamp = new Date().toLocaleString();
+      const pid = process.pid;
+      const currentTime = Date.now();
+      const timeDiff = currentTime - this.lastLogTime;
+
+      console.error(
+         `${clc.red("[Nest]")} ${clc.red(
+            pid.toString()
+         )} - ${timestamp}      ${clc.red("ERROR")} ${clc.yellow(
+            `[${context}]`
+         )} ${clc.red(message)} ${clc.yellow(`+${timeDiff}ms`)} ${
+            trace ? clc.red(trace) : ""
+         }` // Include stack trace if provided
+      );
+
+      this.lastLogTime = currentTime;
+   }
 }
 
 // [Nest] 10804  - 2025/05/14 17:24:06     LOG [RoutesResolver] AppController {/app}: +8ms

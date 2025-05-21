@@ -1,5 +1,4 @@
 import { Injectable } from "@/packages/common/index";
-import { ProductsService } from "../products/products.service";
 
 @Injectable()
 export class UserSerivce {
@@ -27,14 +26,21 @@ export class UserSerivce {
 
 @Injectable()
 export class HobbyService {
-   constructor(private x: string, private y: string) {
-      (this.x = x), (this.y = y);
-      console.log(x, y);
+   private x: string;
+   private y: string;
+
+   constructor(x: string, y: string) {
+      this.x = x;
+      this.y = y;
    }
 
    getHobbies() {
-      console.log("HOBBYSERVICE: getHobbies.", this.x + this.y);
+      console.log("HOBBYSERVICE: getHobbies.", this.x, this.y);
 
-      return "HOBBYSERVICE: getHobbies.";
+      return {
+         message: "HOBBYSERVICE: getHobbies.",
+         x: this.x,
+         y: this.y,
+      };
    }
 }

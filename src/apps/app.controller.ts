@@ -54,6 +54,8 @@ export class AppController {
 
    @Get("meta")
    getMeta() {
+      console.log(this, this.meta);
+
       return {
          message: "Testing META provider from AppController",
          meta: this.meta,
