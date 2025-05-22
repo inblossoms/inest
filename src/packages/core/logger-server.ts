@@ -2,6 +2,7 @@ import * as clc from "cli-color";
 
 export class Logger {
    private static lastLogTime = Date.now();
+   private static readonly logger = console;
 
    static log(message: string, context: string = "") {
       const timestamp = new Date().toLocaleString();
@@ -34,6 +35,23 @@ export class Logger {
          )} ${clc.red(message)} ${clc.yellow(`+${timeDiff}ms`)} ${
             trace ? clc.red(trace) : ""
          }` // Include stack trace if provided
+      );
+
+      this.lastLogTime = currentTime;
+   }
+
+   static warn(message: string, context: string = "") {
+      const timestamp = new Date().toLocaleString();
+      const pid = process.pid;
+      const currentTime = Date.now();
+      const timeDiff = currentTime - this.lastLogTime;
+
+      console.warn(
+         `${clc.yellow("[Nest]")} ${clc.yellow(
+            pid.toString()
+         )} - ${timestamp}      ${clc.yellow("WARN")} ${clc.yellow(
+            `[${context}]`
+         )} ${clc.yellow(message)} ${clc.yellow(`+${timeDiff}ms`)}`
       );
 
       this.lastLogTime = currentTime;
