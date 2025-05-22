@@ -1,8 +1,18 @@
+import { isModule, isObject } from "@/packages/shared/shared.utils";
 import {
    PARAMTYPES_METADATA,
    SELF_DECLARED_DEPS_METADATA,
 } from "../../common/constants";
 import { ModuleRegistry } from "../modules/module-registry";
+
+interface Provider {
+   provide: any;
+   useClass?: any;
+   useValue?: any;
+   useFactory?: (...args: any[]) => any;
+   useExisting?: any;
+   inject?: any[];
+}
 
 /**
  * 提供者收集器类
@@ -29,13 +39,11 @@ export class ProviderCollector {
    public collectProviders(provider: any) {
       // 确定提供者令牌
       const providerToken =
-         typeof provider === "object" &&
-         provider !== null &&
-         "provide" in provider
+         isObject(provider) && "provide" in provider
             ? provider.provide
             : provider;
 
-      // 如果提供者已经处理过，直接返回
+      // 如果 provider 已经处理过（被收集），直接返回
       if (
          this.Modules.has(providerToken) &&
          (typeof provider !== "object" ||
@@ -46,8 +54,8 @@ export class ProviderCollector {
       }
 
       // 处理不同类型的提供者
-      if (typeof provider === "function") {
-         // 处理类提供者
+      if (isModule(provider)) {
+         // 处理语法糖 provider
          const providerDependencies = this.getProviderDependencies(
             provider,
             providerToken
@@ -59,41 +67,42 @@ export class ProviderCollector {
             console.error(`实例化类 ${String(providerToken)} 时出错:`, error);
             this.Modules.set(providerToken, null);
          }
-      } else if (
-         typeof provider === "object" &&
-         provider !== null &&
-         "provide" in provider
-      ) {
+      } else if (isObject(provider) && "provide" in provider) {
          // 处理对象形式的提供者定义
-         const token = provider.provide;
+         const token = (provider as Provider).provide;
 
-         if (provider.useClass) {
+         if ((provider as Provider).useClass) {
             // 处理 useClass 类型的提供者
             const providerDependencies = this.getProviderDependencies(
-               provider.useClass,
+               (provider as Provider).useClass,
                token
             );
             try {
-               const inst = new provider.useClass(...providerDependencies);
+               const inst = new (provider as Provider).useClass(
+                  ...providerDependencies
+               );
                this.Modules.set(token, inst);
             } catch (error) {
                console.error(
-                  `实例化 useClass 提供者 ${String(token)} 时出错:`,
+                  `Error instantiating useClass provider ${String(token)}:`,
                   error
                );
                this.Modules.set(token, null);
             }
-         } else if (provider.useValue !== undefined) {
-            // 处理 useValue 类型的提供者
-            this.Modules.set(token, provider.useValue);
-         } else if (provider.useFactory) {
-            // 处理 useFactory 类型的提供者
-            const injects = provider.inject ?? [];
+         } else if ((provider as Provider).useValue !== undefined) {
+            // useValue provider
+            this.Modules.set(token, (provider as Provider).useValue);
+         } else if ((provider as Provider).useFactory) {
+            // useFactory provider
+            const injects = (provider as Provider).inject ?? [];
             const parsedTokenValues = injects.map((injectToken) =>
+               //>inject 注入的内容可以是常量值，也可以是 provider 注入的 Token
                this.resolveProvider(injectToken)
             );
             try {
-               const instance = provider.useFactory(...parsedTokenValues);
+               const instance = (provider as Provider).useFactory(
+                  ...parsedTokenValues
+               );
                if (instance instanceof Promise) {
                   instance
                      .then((resolvedInstance) => {
@@ -101,9 +110,9 @@ export class ProviderCollector {
                      })
                      .catch((error) => {
                         console.error(
-                           `解析异步 useFactory 提供者 ${String(
+                           `Error resolving async useFactory provider ${String(
                               token
-                           )} 时出错:`,
+                           )}:`,
                            error
                         );
                         this.Modules.set(token, null);
@@ -113,26 +122,28 @@ export class ProviderCollector {
                }
             } catch (error) {
                console.error(
-                  `执行 useFactory 提供者 ${String(token)} 时出错:`,
+                  `Error executing useFactory provider ${String(token)}:`,
                   error
                );
                this.Modules.set(token, null);
             }
-         } else if (provider.useExisting) {
+         } else if ((provider as Provider).useExisting) {
             // 处理 useExisting 类型的提供者
-            const existingProvider = this.resolveProvider(provider.useExisting);
+            const existingProvider = this.resolveProvider(
+               (provider as Provider).useExisting
+            );
             this.Modules.set(token, existingProvider);
          } else {
             // 处理未指定类型的提供者
             console.warn(
-               `未处理的提供者定义 ${String(token)}，未找到 use* 属性`,
+               `Provider ${String(token)} has no use* property`,
                provider
             );
             this.Modules.set(token, token);
          }
       } else {
          // 处理意外的提供者定义
-         console.warn("意外的提供者定义:", provider);
+         console.warn("Unexpected provider definition:", provider);
       }
    }
 
@@ -146,7 +157,9 @@ export class ProviderCollector {
    private getProviderDependencies(provider: any, providerToken: any) {
       if (typeof provider !== "function") {
          console.warn(
-            `尝试获取非类提供者的依赖: ${String(providerToken)}`,
+            `Attempting to get dependencies for non-class provider: ${String(
+               providerToken
+            )}`,
             provider
          );
          return [];
@@ -203,7 +216,7 @@ export class ProviderCollector {
 
       // 4. 未找到提供者
       console.error(
-         `resolveProvider: 未解析的依赖: 未找到令牌 ${String(token)} 的提供者`
+         `resolveProvider: unable to resolve provider: ${String(token)}`
       );
       return undefined;
    }

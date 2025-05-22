@@ -18,25 +18,10 @@ import {
    MODULE_METADATA,
 } from "@/packages/common/constants";
 import { HttpArgumentsHost } from "@/packages/common/interfaces/features/arguments-host.interface";
-import { RequestMethod } from "@/packages/common/enums/request-method.enum";
 import { ProviderCollector } from "../providers/provider-collector";
 import { HttpStatus } from "@/packages/common/enums/http-status.enum";
 import { RouteParamtypes } from "@/packages/common/enums/route-paramtypes.enum";
-
-/**
- * HTTP 方法映射表
- * 将 RequestMethod 枚举映射到 Express 的方法名
- */
-const HTTP_METHOD_MAP = {
-   [RequestMethod.GET]: "get",
-   [RequestMethod.POST]: "post",
-   [RequestMethod.PUT]: "put",
-   [RequestMethod.DELETE]: "delete",
-   [RequestMethod.PATCH]: "patch",
-   [RequestMethod.ALL]: "all",
-   [RequestMethod.OPTIONS]: "options",
-   [RequestMethod.HEAD]: "head",
-} as const;
+import { HTTP_METHOD_MAP } from "./interfaces/http-method-map";
 
 /**
  * 路由探索器类
@@ -60,6 +45,7 @@ export class RouterExplorer {
       const controllers =
          Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, module) || [];
 
+      // 从根模块开始，探索并注册所有控制器的路由
       for (const Controller of controllers) {
          this.registerControllerRoutes(Controller);
       }
@@ -84,6 +70,7 @@ export class RouterExplorer {
 
       // 遍历控制器原型上的所有方法
       const controllerPrototype = Controller.prototype;
+
       for (const propName of Object.getOwnPropertyNames(controllerPrototype)) {
          const method = controllerPrototype[propName];
          const httpMethod = Reflect.getMetadata(METHOD_METADATA, method);
@@ -327,8 +314,10 @@ export class RouterExplorer {
    }
 
    /**
-    * 检查控制器方法是否使用了 @Res() 或 @Next() 装饰器
-    * 用于决定是否需要自动发送响应
+    * 检查控制器方法是否使用了 `@Res()` 或 `@Next()` 装饰器
+    * @param controller - 控制器实例
+    * @param methodName - 方法名
+    * @returns 关于响应/next 使用的元数据或 undefined
     */
    private getReqponseOrNextMetadata(
       controller: Object | Function,

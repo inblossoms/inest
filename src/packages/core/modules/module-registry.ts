@@ -6,7 +6,7 @@ import {
 import { Module } from "@/packages/common/index";
 import { Provider } from "@/packages/common/interfaces/modules/provider.interface";
 import { Logger } from "@/packages/core/logger-server";
-import { isModule } from "@/packages/shared/shared.utils";
+import { isModule, isObject } from "@/packages/shared/shared.utils";
 
 /**
  * 模块注册器类
@@ -19,12 +19,12 @@ import { isModule } from "@/packages/shared/shared.utils";
 export class ModuleRegistry {
    /** 模块提供者映射表 module: Set<provider token> */
    private readonly ModuleProviders = new Map<any, Set<any>>();
-   /** 全局提供者令牌集合 */
+   /** 全局提供者令牌集合*/
    private readonly GlobalProviders = new Set<any>();
+   /** 提供者定义映射表 token: definition， */
+   private readonly providerDefinitions = new Map<any, any>();
    /** ProviderCollector 实例 */
    private providerCollector: ProviderCollector;
-   /** 提供者定义映射表 token: definition */
-   private readonly providerDefinitions = new Map<any, any>();
 
    constructor() {}
 
@@ -115,13 +115,11 @@ export class ModuleRegistry {
          }
       }
 
-      // 2. 处理模块自身的提供者
+      // 2. 处理模块自身的 provider
       for (const provider of importedProviders) {
          try {
             const providerToken =
-               typeof provider === "object" &&
-               provider !== null &&
-               "provide" in provider
+               isObject(provider) && "provide" in provider
                   ? provider.provide
                   : provider;
             this.registerProviderInModules(provider, isGlobalProviderModule, [
@@ -145,7 +143,7 @@ export class ModuleRegistry {
          }
       }
 
-      // 3. 处理导出的模块和提供者
+      // 3. 处理导出的 module 和 provider
       for (const moduleOrProvide of moduleExports) {
          try {
             const exportToken = moduleOrProvide.name ?? moduleOrProvide;
@@ -155,12 +153,11 @@ export class ModuleRegistry {
                }`,
                "ModuleRegistry"
             );
+            // 主体逻辑
             if (!isModule(moduleOrProvide)) {
                const moduleProvider = importedProviders.find((provider) => {
                   const providerToken =
-                     typeof provider === "object" &&
-                     provider !== null &&
-                     "provide" in provider
+                     isObject(provider) && "provide" in provider
                         ? provider.provide
                         : provider;
                   return providerToken === moduleOrProvide;
@@ -213,14 +210,12 @@ export class ModuleRegistry {
       if (!provider) return;
 
       const providerToken =
-         typeof provider === "object" &&
-         provider !== null &&
-         "provide" in provider
+         isObject(provider) && "provide" in provider
             ? provider.provide
             : provider;
 
-      modulesToRegisterIn.forEach((_module_) => {
-         const moduleProviders = this.ModuleProviders.get(_module_);
+      modulesToRegisterIn.forEach((module) => {
+         const moduleProviders = this.ModuleProviders.get(module);
          if (moduleProviders) {
             moduleProviders.add(providerToken);
          }
@@ -251,8 +246,8 @@ export class ModuleRegistry {
    ) {
       if (!providerToken) return;
 
-      modulesToAddTo.forEach((_module_) => {
-         const moduleProviders = this.ModuleProviders.get(_module_);
+      modulesToAddTo.forEach((module) => {
+         const moduleProviders = this.ModuleProviders.get(module);
          if (moduleProviders) {
             moduleProviders.add(providerToken);
          }
@@ -332,6 +327,7 @@ export class ModuleRegistry {
 
       // 处理动态模块的提供者
       const dynamicProviders = dynamicModuleConfig.providers ?? [];
+      // 如果该动态模块是一个全局的 provider 则后续需要将其注入到 GlobalProviders 中
       const isGlobalDynamicModule = Reflect.getMetadata(
          GLOBAL_MODULE_METADATA,
          dynamicModuleClass

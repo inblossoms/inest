@@ -1,22 +1,5 @@
 import { Logger } from "../logger-server";
-import { RequestMethod } from "@/packages/common/enums/request-method.enum";
-import { MODULE_METADATA } from "@/packages/common/constants";
 import { ProviderCollector } from "../providers/provider-collector";
-
-/**
- * HTTP 方法映射表
- * 将 RequestMethod 枚举映射到 Express 的方法名
- */
-const HTTP_METHOD_MAP = {
-   [RequestMethod.GET]: "get",
-   [RequestMethod.POST]: "post",
-   [RequestMethod.PUT]: "put",
-   [RequestMethod.DELETE]: "delete",
-   [RequestMethod.PATCH]: "patch",
-   [RequestMethod.ALL]: "all",
-   [RequestMethod.OPTIONS]: "options",
-   [RequestMethod.HEAD]: "head",
-} as const;
 
 /**
  * 控制器注册器类
