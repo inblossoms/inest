@@ -154,7 +154,7 @@ export class ProviderCollector {
     * @param providerToken - 提供者令牌（用于日志）
     * @returns 解析后的依赖实例或值数组
     */
-   private getProviderDependencies(provider: any, providerToken: any) {
+   public getProviderDependencies(provider: any, providerToken: any) {
       if (typeof provider !== "function") {
          console.warn(
             `Attempting to get dependencies for non-class provider: ${String(

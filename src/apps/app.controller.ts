@@ -1,5 +1,5 @@
 import { HobbyService, UserSerivce } from "./user/user.service";
-import { Controller, Get, Inject } from "../packages/common/index";
+import { Controller, Get, Inject, Post } from "../packages/common/index";
 import { AppSerivce } from "./app.service";
 import { NewsService } from "./news/news.service";
 import { ProductsService } from "./products/products.service";
@@ -54,12 +54,24 @@ export class AppController {
 
    @Get("meta")
    getMeta() {
-      console.log(this, this.meta);
-
       return {
          message: "Testing META provider from AppController",
          meta: this.meta,
          timestamp: new Date().toLocaleString(),
       };
+   }
+
+   @Get("middleware1")
+   getMiddlewareForGet() {
+      console.log("MIDDLEWARE FOR GET");
+
+      return "MIDDLEWARE FOR GET.";
+   }
+
+   @Post("middleware")
+   getMiddleware() {
+      console.log("MIDDLEWARE Log for App.Controller.ts");
+
+      return "MIDDLEWARE Log for App.Controller.ts";
    }
 }

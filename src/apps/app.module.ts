@@ -1,19 +1,20 @@
 import { UserModule } from "./user/user.module";
-import { ProductsModule } from "./products/products.module";
 import { NestModule } from "@/packages/common/interfaces/nest-module.interface";
 import { Module } from "../packages/common/index";
 import { MiddlewareConsumer } from "@/packages/common/interfaces/middleware";
-import { LoggerMiddleware } from "./middleware/logger.middleware";
+import { LoggerMiddleware } from "./others/logger.middleware";
 import { DynamicSerivce } from "./dynamic/dynamic.service";
 import { DatabaseModule as DynamicModule } from "./dynamic/dynamic-config.module";
 import { AppSerivce } from "./app.service";
 import { AppController } from "./app.controller"; // router
 import { RequestMethod } from "@/packages/common/enums";
+import { ProductsService } from "./products/products.service";
+import { InjectableService } from "./others/injectable-service";
+import { functionMiddleware } from "./others/function.middleware";
 
 @Module({
    imports: [
       UserModule,
-      ProductsModule,
       DynamicModule.forRoot([
          {
             provide: "DYNAMIC-MODULE1",
@@ -33,14 +34,26 @@ import { RequestMethod } from "@/packages/common/enums";
          useClass: AppSerivce,
       },
       DynamicSerivce,
+      ProductsService,
+      InjectableService,
    ],
 })
+// export class AppModule {}
 export class AppModule implements NestModule {
    configure(consumer: MiddlewareConsumer) {
-      //   consumer.apply(LoggerMiddleware).forRoutes("App");
-      consumer.apply(LoggerMiddleware).forRoutes({
-         path: "middleware",
-         method: RequestMethod.GET,
-      });
+      consumer
+         .apply(LoggerMiddleware)
+         .exclude({
+            path: "app/middleware1",
+            method: RequestMethod.GET,
+         })
+         //  .forRoutes(functionMiddleware);
+         //  .forRoutes(AppController);
+         //  .forRoutes("app/mi*r");
+         //   .forRoutes("ap*/*");
+         .forRoutes(
+            { path: "app/middleware", method: RequestMethod.POST },
+            { path: "app/middleware1", method: RequestMethod.GET }
+         );
    }
 }

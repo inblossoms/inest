@@ -3,6 +3,7 @@ import { NestFactory } from "../packages/core/index"; // nest inst
 import { AppModule } from "./app.module"; // root
 import * as session from "express-session";
 import { Logger } from "../packages/core/logger-server";
+import { functionMiddleware } from "./others/function.middleware";
 
 async function bootstrap() {
    try {
@@ -22,6 +23,7 @@ async function bootstrap() {
 
       Logger.log("Session middleware applied successfully", "bootstrap");
 
+      //   app.use(functionMiddleware); // 全局中间件
       await app.listen(3000);
       Logger.log("Application is listening on port 3000", "bootstrap");
    } catch (error) {
