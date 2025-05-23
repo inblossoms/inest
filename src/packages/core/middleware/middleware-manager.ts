@@ -6,6 +6,7 @@ import {
 } from "express";
 import { RequestMethod } from "../../common/enums/request-method.enum";
 import { Logger } from "../logger-server";
+import { isFunction, isObject } from "@/packages/shared/shared.utils";
 
 /**
  * 中间件管理器类
@@ -226,9 +227,9 @@ export class MiddlewareManager {
    private isClassMiddleware(middleware: any): boolean {
       return (
          middleware &&
-         typeof middleware === "function" &&
-         middleware.prototype &&
-         typeof middleware.prototype.use === "function" &&
+         isFunction(middleware) &&
+         isObject(middleware.prototype) &&
+         isFunction(middleware.prototype.use) &&
          middleware.prototype.use.length === 3
       );
    }
@@ -243,9 +244,9 @@ export class MiddlewareManager {
    private isMiddlewareInstance(middleware: any): boolean {
       return (
          middleware &&
-         typeof middleware === "object" &&
-         typeof middleware.use === "function" &&
-         middleware.use.length === 3
+         isObject(middleware) &&
+         isFunction((middleware as any).use) &&
+         (middleware as any).use.length === 3
       );
    }
 
@@ -256,7 +257,11 @@ export class MiddlewareManager {
     * 2. 没有 use 方法（避免与中间件实例混淆）
     */
    private isExpressMiddleware(middleware: any): boolean {
-      return middleware && typeof middleware === "object" && !middleware.use;
+      return (
+         middleware &&
+         isObject(middleware) &&
+         !isFunction((middleware as any).use)
+      );
    }
 
    /**
