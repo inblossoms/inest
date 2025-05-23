@@ -1,14 +1,13 @@
 import "reflect-metadata";
-
 import type { Express } from "express";
 import * as express from "express";
-import { Logger } from "./logger-server";
+import { RouterExplorer } from "./router/router-explorer";
 import { ProviderCollector } from "./providers/provider-collector";
 import { ModuleRegistry } from "./modules/module-registry";
-import { ControllerRegistry } from "./controllers/controller-registry";
-import { RouterExplorer } from "./router/router-explorer";
 import { MODULE_METADATA } from "@/packages/common/constants";
 import { MiddlewareManager } from "./middleware";
+import { Logger } from "./logger-server";
+import { ControllerRegistry } from "./controllers/controller-registry";
 
 /**
  * NestApplication 类
@@ -76,43 +75,9 @@ export class NestApplication {
       // 初始化中间件管理器
       this.middlewareManager = new MiddlewareManager(
          this.app,
-         (provider: any) => {
-            if (typeof provider !== "function") {
-               return [];
-            }
-
-            // 收集提供者
-            this.providerCollector.collectProviders(provider);
-
-            // 获取提供者的依赖
-            const dependencies = this.providerCollector.getProviderDependencies(
-               provider,
-               provider.name
-            );
-
-            // 确保所有依赖都被正确解析
-            return dependencies.map((dep) => {
-               if (dep === undefined || dep === null) {
-                  Logger.warn(
-                     `Dependency for ${provider.name} is ${
-                        dep === undefined ? "undefined" : "null"
-                     }`,
-                     "NestApplication"
-                  );
-                  // 尝试从 providerCollector 中重新获取依赖
-                  const resolvedDep =
-                     this.providerCollector.resolveProvider(dep);
-                  if (resolvedDep === undefined || resolvedDep === null) {
-                     Logger.error(
-                        `Failed to resolve dependency for ${provider.name}`,
-                        "NestApplication"
-                     );
-                  }
-                  return resolvedDep;
-               }
-               return dep;
-            });
-         }
+         this.providerCollector.getProviderDependencies.bind(
+            this.providerCollector
+         )
       );
 
       // 配置中间件
