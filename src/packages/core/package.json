@@ -5,7 +5,9 @@
    "main": "../../apps/main.ts",
    "scripts": {
       "build": "tsc",
-      "dev": "tsc -w"
+      "dev": "tsc -w",
+      "test": "jest",
+      "test:watch": "jest --watch"
    },
    "keywords": [],
    "author": "",

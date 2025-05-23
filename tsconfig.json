@@ -31,7 +31,8 @@
 		"types": [
 			"node",
 			"express",
-			"express-session"
+			"express-session",
+			"jest"
 		]
 	}
 }
