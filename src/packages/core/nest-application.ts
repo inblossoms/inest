@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import type { Express } from "express";
 import * as express from "express";
 import { RouterExplorer } from "./router/router-explorer";
@@ -7,15 +6,16 @@ import { ModuleRegistry } from "./modules/module-registry";
 import { MODULE_METADATA } from "@/packages/common/constants";
 import { MiddlewareManager } from "./middleware";
 import { Logger } from "./logger-server";
-import { ControllerRegistry } from "./controllers/controller-registry";
-import { ExceptionFilterManager } from "./exceptions/exception-filter-manager";
-import { ExternalExceptionFilter } from "./exceptions/external-exception-filter";
 import { FilterManager } from "./exceptions/filter-manager";
+import { ExternalExceptionFilter } from "./exceptions/external-exception-filter";
+import { ExceptionFilterManager } from "./exceptions/exception-filter-manager";
+import { ControllerRegistry } from "./controllers/controller-registry";
+import "reflect-metadata";
 import {
-   CONTROLLERS_MESSAGES,
-   MESSAGES,
-   MIDDLEWARE_MESSAGES,
    ROUTES_MESSAGES,
+   MIDDLEWARE_MESSAGES,
+   MESSAGES,
+   CONTROLLERS_MESSAGES,
 } from "./constants";
 
 /**
