@@ -11,7 +11,12 @@ import { ControllerRegistry } from "./controllers/controller-registry";
 import { ExceptionFilterManager } from "./exceptions/exception-filter-manager";
 import { ExternalExceptionFilter } from "./exceptions/external-exception-filter";
 import { FilterManager } from "./exceptions/filter-manager";
-import { APP_FILTER } from "./constants";
+import {
+   CONTROLLERS_MESSAGES,
+   MESSAGES,
+   MIDDLEWARE_MESSAGES,
+   ROUTES_MESSAGES,
+} from "./constants";
 
 /**
  * NestApplication 类
@@ -131,7 +136,7 @@ export class NestApplication {
     * @param middleware - 要应用的中间件
     */
    apply(...middleware): this {
-      Logger.log("Applying middleware...", "NestApplication");
+      Logger.log(MIDDLEWARE_MESSAGES.APPLYING_MIDDLEWARE, "NestApplication");
       this.middlewareManager.apply(...middleware);
       return this;
    }
@@ -141,7 +146,10 @@ export class NestApplication {
     * @param routes - 要排除的路由
     */
    exclude(...routes): this {
-      Logger.log("Excluding middleware from routes...", "NestApplication");
+      Logger.log(
+         MIDDLEWARE_MESSAGES.EXCLUDING_MIDDLEWARE_TO_ROUTES,
+         "NestApplication"
+      );
       this.middlewareManager.exclude(...routes);
       return this;
    }
@@ -151,7 +159,10 @@ export class NestApplication {
     * @param routes - 要应用中间件的路由
     */
    forRoutes(...routes): this {
-      Logger.log("Applying middleware to routes...", "NestApplication");
+      Logger.log(
+         MIDDLEWARE_MESSAGES.APPLYING_MIDDLEWARE_TO_ROUTES,
+         "NestApplication"
+      );
       this.middlewareManager.forRoutes(...routes);
       return this;
    }
@@ -164,23 +175,32 @@ export class NestApplication {
     * 3. 探索并注册路由
     */
    async init() {
-      Logger.log("Starting Nest application...", "NestApplication");
+      Logger.log(MESSAGES.APPLICATION_START, "NestApplication");
 
-      Logger.log("Initializing middleware...", "NestApplication");
+      Logger.log(
+         MIDDLEWARE_MESSAGES.INITIALIZING_MIDDLEWARE,
+         "NestApplication"
+      );
       await this.initMiddleware();
-      Logger.log("Middleware initialized", "NestApplication");
+      Logger.log(MIDDLEWARE_MESSAGES.MIDDLEWARE_INITIALIZED, "NestApplication");
 
-      Logger.log("Initializing controllers...", "NestApplication");
+      Logger.log(
+         CONTROLLERS_MESSAGES.INITIALIZING_CONTROLLERS,
+         "NestApplication"
+      );
       const controllers =
          Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, this.module) || [];
       await this.controllerRegistry.initializeControllers(controllers);
-      Logger.log("Controllers initialized", "NestApplication");
+      Logger.log(
+         CONTROLLERS_MESSAGES.CONTROLLERS_INITIALIZED,
+         "NestApplication"
+      );
 
-      Logger.log("Exploring and registering routes...", "NestApplication");
+      Logger.log(ROUTES_MESSAGES.INITIALIZING_ROUTES, "NestApplication");
       this.routerExplorer.explore(this.module);
-      Logger.log("Routes registered", "NestApplication");
+      Logger.log(ROUTES_MESSAGES.ROUTES_REGISTERED, "NestApplication");
 
-      Logger.log("Nest application successfully started", "NestApplication");
+      Logger.log(MESSAGES.APPLICATION_READY, "NestApplication");
    }
 
    /**
@@ -216,7 +236,7 @@ export class NestApplication {
          await this.init();
       } catch (error) {
          Logger.error(
-            "Error during application initialization:",
+            MESSAGES.APPLICATION_INITIALIZATION_ERR,
             error,
             "NestApplication"
          );
