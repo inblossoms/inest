@@ -250,8 +250,9 @@ export class ProviderCollector {
          if (valueProvider !== undefined) {
             return valueProvider;
          }
-         // 如果是 Optional 依赖，返回 undefined
-         return undefined;
+         // 如果找不到对应的提供者，且不是 Optional 依赖，则返回字符串本身
+         // 这样在工厂函数中可以直接使用字符串值
+         return token;
       }
 
       // 4. 未找到提供者
