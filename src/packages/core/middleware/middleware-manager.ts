@@ -149,6 +149,7 @@ export class MiddlewareManager {
             }
          }
       }
+      this.middlewares.clear();
       return this;
    }
 
