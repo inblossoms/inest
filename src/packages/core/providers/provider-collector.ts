@@ -5,7 +5,6 @@ import {
 } from "../../common/constants";
 import { ModuleRegistry } from "../modules/module-registry";
 import { Logger } from "../logger-server";
-import { Provider as IProvider } from "@/packages/common/interfaces/modules/provider.interface";
 
 interface Provider {
    provide: any;
@@ -74,7 +73,12 @@ export class ProviderCollector {
             const inst = new provider(...providerDependencies);
             this.providers.set(providerToken, inst);
          } catch (error) {
-            console.error(`实例化类 ${String(providerToken)} 时出错:`, error);
+            Logger.error(
+               `An error occurred when instantiating the class ${String(
+                  providerToken
+               )}:`,
+               error
+            );
             this.providers.set(providerToken, null);
          }
       } else if (isObject(provider) && "provide" in provider) {
@@ -93,7 +97,7 @@ export class ProviderCollector {
                );
                this.providers.set(token, inst);
             } catch (error) {
-               console.error(
+               Logger.error(
                   `Error instantiating useClass provider ${String(token)}:`,
                   error
                );
@@ -119,7 +123,7 @@ export class ProviderCollector {
                         this.providers.set(token, resolvedInstance);
                      })
                      .catch((error) => {
-                        console.error(
+                        Logger.error(
                            `Error resolving async useFactory provider ${String(
                               token
                            )}:`,
@@ -131,7 +135,7 @@ export class ProviderCollector {
                   this.providers.set(token, instance);
                }
             } catch (error) {
-               console.error(
+               Logger.error(
                   `Error executing useFactory provider ${String(token)}:`,
                   error
                );
@@ -145,15 +149,20 @@ export class ProviderCollector {
             this.providers.set(token, existingProvider);
          } else {
             // 处理未指定类型的提供者
-            console.warn(
+            Logger.warn(
                `Provider ${String(token)} has no use* property`,
-               provider
+               String(provider)
             );
             this.providers.set(token, token);
          }
+      } else if (typeof provider === "string" || typeof provider === "symbol") {
+         // 处理字符串或符号类型的令牌
+         // 这些通常是 @Inject() 装饰器使用的令牌
+         // 不需要警告，因为这是预期的行为
+         return;
       } else {
          // 处理意外的提供者定义
-         console.warn("Unexpected provider definition:", provider);
+         Logger.warn("Unexpected provider definition:", provider);
       }
    }
 
@@ -225,7 +234,7 @@ export class ProviderCollector {
       }
 
       // 4. 未找到提供者
-      console.error(
+      Logger.error(
          `resolveProvider: unable to resolve provider: ${String(token)}`
       );
       return undefined;
