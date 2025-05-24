@@ -34,7 +34,11 @@ import { HTTP_METHOD_MAP } from "./interfaces/http-method-map";
 export class RouterExplorer {
    constructor(
       private readonly app: Express,
-      private readonly providerCollector: ProviderCollector
+      private readonly providerCollector: ProviderCollector,
+      private readonly handleException: (
+         error: any,
+         context: any
+      ) => Promise<void>
    ) {}
 
    /**
@@ -143,6 +147,11 @@ export class RouterExplorer {
             res: ExpressResponse,
             next: NextFunction
          ) => {
+            const context = this.createCunstomParamFactoryContext(
+               req,
+               res,
+               next
+            );
             try {
                // 解析路由参数
                const args = this.resolveRouteArgs(
@@ -186,7 +195,7 @@ export class RouterExplorer {
                   return res.send(result);
                }
             } catch (error) {
-               next(error);
+               await this.handleException(error, context);
             }
          }
       );

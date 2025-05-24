@@ -1,5 +1,7 @@
 import { Logger } from "../logger-server";
 import { ProviderCollector } from "../providers/provider-collector";
+import { ExceptionFilterManager } from "../exceptions/exception-filter-manager";
+import { EXCEPTION_FILTERS_METADATA } from "@/packages/common/constants";
 
 /**
  * 控制器注册器类
@@ -9,7 +11,10 @@ import { ProviderCollector } from "../providers/provider-collector";
  * 3. 管理控制器的生命周期
  */
 export class ControllerRegistry {
-   constructor(private readonly providerCollector: ProviderCollector) {}
+   constructor(
+      private readonly providerCollector: ProviderCollector,
+      private readonly exceptionFilterManager?: ExceptionFilterManager
+   ) {}
 
    /**
     * 初始化模块中的所有控制器
@@ -30,6 +35,30 @@ export class ControllerRegistry {
                "ControllerRegistry"
             );
             await this.providerCollector.collectProviders(controller);
+
+            // 新增：收集并注册控制器和方法上的异常过滤器
+            if (this.exceptionFilterManager) {
+               // 控制器级过滤器
+               const controllerExceptionFilters =
+                  Reflect.getMetadata(EXCEPTION_FILTERS_METADATA, controller) ||
+                  [];
+               controllerExceptionFilters.forEach((filter) => {
+                  this.exceptionFilterManager.addExceptionFilter(filter);
+               });
+
+               // 方法级过滤器
+               const prototype = controller.prototype;
+               for (const propName of Object.getOwnPropertyNames(prototype)) {
+                  const method = prototype[propName];
+                  if (typeof method !== "function") continue;
+                  const methodExceptionFilters =
+                     Reflect.getMetadata(EXCEPTION_FILTERS_METADATA, method) ||
+                     [];
+                  methodExceptionFilters.forEach((filter) => {
+                     this.exceptionFilterManager.addExceptionFilter(filter);
+                  });
+               }
+            }
          } catch (error) {
             Logger.error(
                `Error initializing controller ${String(

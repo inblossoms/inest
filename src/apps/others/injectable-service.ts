@@ -5,8 +5,8 @@ export class InjectableService {
    constructor() {}
 
    getInjectableService() {
-      console.log("InjectableService");
+      console.log("👻👻👻: InjectableService");
 
-      return "InjectableService";
+      return "GETINJECTABLESERVICE";
    }
 }

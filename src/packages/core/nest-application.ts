@@ -8,6 +8,8 @@ import { MODULE_METADATA } from "@/packages/common/constants";
 import { MiddlewareManager } from "./middleware";
 import { Logger } from "./logger-server";
 import { ControllerRegistry } from "./controllers/controller-registry";
+import { ExceptionFilterManager } from "./exceptions/exception-filter-manager";
+import { ExternalExceptionFilter } from "./exceptions/external-exception-filter";
 
 /**
  * NestApplication 类
@@ -31,34 +33,49 @@ export class NestApplication {
    private readonly routerExplorer: RouterExplorer;
    /** 中间件管理器实例 */
    private middlewareManager: MiddlewareManager;
+   /** 异常过滤器管理器实例 */
+   private readonly exceptionFilterManager: ExceptionFilterManager;
+   /** 外部异常过滤器 */
+   private readonly externalExceptionFilter = new ExternalExceptionFilter();
 
    /**
     * 创建新的 NestApplication 实例
     * @param module - 应用程序的根模块，包含所有控制器、提供者和导入的模块
     */
    constructor(private readonly module: any) {
-      // 初始化模块注册器
+      // Initialize module registry
       this.moduleRegistry = new ModuleRegistry();
 
-      // 初始化提供者收集器
+      // Initialize provider collector
       this.providerCollector = new ProviderCollector(this.moduleRegistry);
 
-      // 设置模块注册器的提供者收集器
+      // Set provider collector in module registry
       this.moduleRegistry.setProviderCollector(this.providerCollector);
 
-      // 初始化控制器注册器
-      this.controllerRegistry = new ControllerRegistry(this.providerCollector);
-
-      // 初始化路由探索器
-      this.routerExplorer = new RouterExplorer(
-         this.app,
-         this.providerCollector
+      // Initialize exception filter manager first
+      this.exceptionFilterManager = new ExceptionFilterManager(
+         this.providerCollector.getProviderDependencies.bind(
+            this.providerCollector
+         )
       );
 
-      // 配置请求体解析中间件
+      // Initialize controller registry with exception filter manager
+      this.controllerRegistry = new ControllerRegistry(
+         this.providerCollector,
+         this.exceptionFilterManager
+      );
+
+      // Initialize router explorer with exception handler
+      this.routerExplorer = new RouterExplorer(
+         this.app,
+         this.providerCollector,
+         this.handleException.bind(this)
+      );
+
+      // Configure body parser
       this.bodyParser();
 
-      // 添加用户信息中间件
+      // Add user info middleware
       this.app.use(function (req, res, next) {
          (req as any).user = { name: "roy", ID: "0024" };
          next();
@@ -66,13 +83,24 @@ export class NestApplication {
    }
 
    /**
+    * 处理异常
+    * @param err - 异常对象
+    * @param context - 异常上下文
+    */
+   private async handleException(err: any, context: any) {
+      await this.exceptionFilterManager.handleException(
+         err,
+         context,
+         this.externalExceptionFilter
+      );
+   }
+
+   /**
     * 初始化中间件
     */
    private async initMiddleware() {
-      // 确保提供者已经被收集
       await this.moduleRegistry.registerModule(this.module);
 
-      // 初始化中间件管理器
       this.middlewareManager = new MiddlewareManager(
          this.app,
          this.providerCollector.getProviderDependencies.bind(
@@ -80,7 +108,6 @@ export class NestApplication {
          )
       );
 
-      // 配置中间件
       if (typeof this.module.prototype?.configure === "function") {
          this.module.prototype.configure(this);
       }
@@ -126,19 +153,16 @@ export class NestApplication {
    async init() {
       Logger.log("Starting Nest application...", "NestApplication");
 
-      // 初始化中间件（包括提供者收集）
       Logger.log("Initializing middleware...", "NestApplication");
       await this.initMiddleware();
       Logger.log("Middleware initialized", "NestApplication");
 
-      // 初始化控制器
       Logger.log("Initializing controllers...", "NestApplication");
       const controllers =
          Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, this.module) || [];
       await this.controllerRegistry.initializeControllers(controllers);
       Logger.log("Controllers initialized", "NestApplication");
 
-      // 探索并注册路由
       Logger.log("Exploring and registering routes...", "NestApplication");
       this.routerExplorer.explore(this.module);
       Logger.log("Routes registered", "NestApplication");
