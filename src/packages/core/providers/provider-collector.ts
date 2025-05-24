@@ -2,6 +2,7 @@ import { isModule, isObject } from "@/packages/shared/shared.utils";
 import {
    PARAMTYPES_METADATA,
    SELF_DECLARED_DEPS_METADATA,
+   OPTIONAL_DEPS_METADATA,
 } from "../../common/constants";
 import { ModuleRegistry } from "../modules/module-registry";
 import { Logger } from "../logger-server";
@@ -105,6 +106,7 @@ export class ProviderCollector {
             }
          } else if ((provider as Provider).useValue !== undefined) {
             // useValue provider
+            // 直接设置值，后面的会覆盖前面的
             this.providers.set(token, (provider as Provider).useValue);
          } else if ((provider as Provider).useFactory) {
             // useFactory provider
@@ -190,6 +192,9 @@ export class ProviderCollector {
       // 获取自定义依赖元数据
       const selfDeclaredDeps =
          Reflect.getMetadata(SELF_DECLARED_DEPS_METADATA, provider) ?? [];
+      // 获取可选依赖元数据
+      const optionalDeps =
+         Reflect.getMetadata(OPTIONAL_DEPS_METADATA, provider) ?? [];
 
       return paramtypes.map((paramtype: any, index: number) => {
          // 查找此参数位置的自定义依赖
@@ -200,8 +205,18 @@ export class ProviderCollector {
          // 使用自定义依赖令牌或参数类型
          const token = matchedSelfDeclaredDep?.param ?? paramtype;
 
+         // 检查是否是可选依赖
+         const isOptional = optionalDeps.includes(index);
+
          // 解析依赖
-         return this.resolveProvider(token);
+         const resolved = this.resolveProvider(token);
+
+         // 如果是可选依赖且解析失败，返回 undefined
+         if (isOptional && resolved === undefined) {
+            return undefined;
+         }
+
+         return resolved;
       });
    }
 
@@ -228,15 +243,18 @@ export class ProviderCollector {
          }
       }
 
-      // 3. 如果是字符串，直接返回
+      // 3. 如果是字符串，检查是否是 Optional 依赖
       if (typeof token === "string") {
-         return token;
+         // 检查是否在 providers 映射中有对应的值提供者
+         const valueProvider = this.providers.get(token);
+         if (valueProvider !== undefined) {
+            return valueProvider;
+         }
+         // 如果是 Optional 依赖，返回 undefined
+         return undefined;
       }
 
       // 4. 未找到提供者
-      Logger.error(
-         `resolveProvider: unable to resolve provider: ${String(token)}`
-      );
       return undefined;
    }
 
@@ -267,26 +285,14 @@ export class ProviderCollector {
          );
          const instance = new provider.useClass(...dependencies);
          this.providers.set(provider.provide, instance);
-         Logger.log(
-            `Collected provider: ${provider.useClass.name}`,
-            "ProviderCollector"
-         );
       } else if (provider.provide && provider.useValue) {
          this.providers.set(provider.provide, provider.useValue);
-         Logger.log(
-            `Collected value provider: ${provider.provide.toString()}`,
-            "ProviderCollector"
-         );
       } else if (provider.provide && provider.useFactory) {
          const dependencies = provider.inject
             ? provider.inject.map((token) => this.getProvider(token))
             : [];
          const instance = provider.useFactory(...dependencies);
          this.providers.set(provider.provide, instance);
-         Logger.log(
-            `Collected factory provider: ${provider.provide.toString()}`,
-            "ProviderCollector"
-         );
       }
    }
 }

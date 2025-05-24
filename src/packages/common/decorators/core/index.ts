@@ -3,3 +3,4 @@ export * from "./inject.decorator";
 export * from "./injectable.decorator";
 export * from "./catch.decorator";
 export * from "./exception-filters.decorator";
+export * from "./optional.decorator";

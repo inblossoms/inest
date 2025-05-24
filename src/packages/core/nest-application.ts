@@ -11,12 +11,7 @@ import { ExternalExceptionFilter } from "./exceptions/external-exception-filter"
 import { ExceptionFilterManager } from "./exceptions/exception-filter-manager";
 import { ControllerRegistry } from "./controllers/controller-registry";
 import "reflect-metadata";
-import {
-   ROUTES_MESSAGES,
-   MIDDLEWARE_MESSAGES,
-   MESSAGES,
-   CONTROLLERS_MESSAGES,
-} from "./constants";
+import { MIDDLEWARE_MESSAGES, MESSAGES } from "./constants";
 
 /**
  * NestApplication 类
@@ -176,30 +171,11 @@ export class NestApplication {
     */
    async init() {
       Logger.log(MESSAGES.APPLICATION_START, "NestApplication");
-
-      Logger.log(
-         MIDDLEWARE_MESSAGES.INITIALIZING_MIDDLEWARE,
-         "NestApplication"
-      );
       await this.initMiddleware();
-      Logger.log(MIDDLEWARE_MESSAGES.MIDDLEWARE_INITIALIZED, "NestApplication");
-
-      Logger.log(
-         CONTROLLERS_MESSAGES.INITIALIZING_CONTROLLERS,
-         "NestApplication"
-      );
       const controllers =
          Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, this.module) || [];
       await this.controllerRegistry.initializeControllers(controllers);
-      Logger.log(
-         CONTROLLERS_MESSAGES.CONTROLLERS_INITIALIZED,
-         "NestApplication"
-      );
-
-      Logger.log(ROUTES_MESSAGES.INITIALIZING_ROUTES, "NestApplication");
       this.routerExplorer.explore(this.module);
-      Logger.log(ROUTES_MESSAGES.ROUTES_REGISTERED, "NestApplication");
-
       Logger.log(MESSAGES.APPLICATION_READY, "NestApplication");
    }
 

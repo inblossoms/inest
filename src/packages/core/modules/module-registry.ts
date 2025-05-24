@@ -79,24 +79,12 @@ export class ModuleRegistry {
       for (const importModule of moduleImports) {
          try {
             if (this.isDynamicModule(importModule)) {
-               Logger.log(
-                  `Registering dynamic import: ${String(
-                     importModule.module?.name ?? importModule
-                  )} in ${module.name ?? "unknown module"}`,
-                  "ModuleRegistry"
-               );
                await this.registerDynamicModule(
                   importModule,
                   module,
                   ...parentModules
                );
             } else if (isModule(importModule)) {
-               Logger.log(
-                  `Registering static import: ${String(
-                     importModule.name ?? importModule
-                  )} in ${module.name ?? "unknown module"}`,
-                  "ModuleRegistry"
-               );
                await this.registerModule(
                   importModule,
                   module,
@@ -115,79 +103,34 @@ export class ModuleRegistry {
          }
       }
 
-      // 2. 处理模块自身的 provider
-      for (const provider of importedProviders) {
-         try {
-            const providerToken =
-               isObject(provider) && "provide" in provider
-                  ? provider.provide
-                  : provider;
-            this.registerProviderInModules(
-               providerToken,
-               isGlobalProviderModule,
-               [module]
-            );
-         } catch (error) {
-            Logger.error(
-               `Processing provider ${String(provider)} in module ${
-                  module.name ?? "Unknown module"
-               } : `,
-               error instanceof Error ? error.stack : String(error),
-               "ModuleRegistry"
-            );
-            throw error;
+      // 2. 预处理导出的提供者
+      for (const moduleOrProvide of moduleExports) {
+         if (!isModule(moduleOrProvide)) {
+            const moduleProvider = importedProviders.find((provider) => {
+               const providerToken =
+                  isObject(provider) && "provide" in provider
+                     ? provider.provide
+                     : provider;
+               return providerToken === moduleOrProvide;
+            });
+
+            if (moduleProvider) {
+               // 3. 收集导出的提供者（包括值提供者）
+               this.providerCollector.collectProviders(moduleProvider);
+            }
          }
       }
 
-      // 3. 处理导出的 module 和 provider
-      for (const moduleOrProvide of moduleExports) {
-         try {
-            const exportToken = moduleOrProvide.name ?? moduleOrProvide;
-            Logger.log(
-               `Processing export: ${String(exportToken)} from ${
-                  module.name ?? "unknown module"
-               }`,
-               "ModuleRegistry"
-            );
-            // 主体逻辑
-            if (!isModule(moduleOrProvide)) {
-               const moduleProvider = importedProviders.find((provider) => {
-                  const providerToken =
-                     isObject(provider) && "provide" in provider
-                        ? provider.provide
-                        : provider;
-                  return providerToken === moduleOrProvide;
-               });
+      // 4. 处理模块自身的提供者
+      for (const provider of importedProviders) {
+         // 5. 收集模块自身的提供者
+         this.providerCollector.collectProviders(provider);
+      }
 
-               if (moduleProvider) {
-                  this.addProviderTokenToModules(
-                     moduleOrProvide,
-                     isGlobalProviderModule,
-                     [...parentModules]
-                  );
-                  // 存储提供者定义
-                  if (!this.providerDefinitions.has(moduleOrProvide)) {
-                     this.providerDefinitions.set(
-                        moduleOrProvide,
-                        moduleProvider
-                     );
-                  }
-                  // 确保提供者被收集
-                  this.providerCollector.collectProviders(moduleProvider);
-               }
-            } else {
-               await this.registerModule(moduleOrProvide, ...parentModules);
-            }
-         } catch (error) {
-            const exportToken = moduleOrProvide.name ?? moduleOrProvide;
-            Logger.error(
-               `Error processing export ${String(exportToken)} from module ${
-                  module.name ?? "unknown module"
-               }:`,
-               error instanceof Error ? error.stack : String(error),
-               "ModuleRegistry"
-            );
-            throw error;
+      // 4. 处理导出的模块（最后处理）
+      for (const moduleOrProvide of moduleExports) {
+         if (isModule(moduleOrProvide)) {
+            await this.registerModule(moduleOrProvide, ...parentModules);
          }
       }
    }
@@ -210,6 +153,14 @@ export class ModuleRegistry {
             ? provider.provide
             : provider;
 
+      // 存储提供者定义
+      if (!this.providerDefinitions.has(providerToken)) {
+         this.providerDefinitions.set(providerToken, provider);
+      }
+
+      // 收集提供者
+      this.providerCollector.collectProviders(provider);
+
       modulesToRegisterIn.forEach((module) => {
          const moduleProviders = this.ModuleProviders.get(module);
          if (moduleProviders) {
@@ -220,13 +171,6 @@ export class ModuleRegistry {
             this.GlobalProviders.add(providerToken);
          }
       });
-
-      // 存储提供者定义
-      if (!this.providerDefinitions.has(providerToken)) {
-         this.providerDefinitions.set(providerToken, provider);
-      }
-
-      this.providerCollector.collectProviders(provider);
    }
 
    /**

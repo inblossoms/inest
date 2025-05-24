@@ -12,6 +12,7 @@ import { ProductsService } from "./products/products.service";
 import { InjectableService } from "./others/injectable-service";
 import { functionMiddleware } from "./others/function.middleware";
 import { FilterModule } from "./filter/filter.module";
+import { OptionalModule } from "./others/optional/optional.module";
 
 @Module({
    imports: [
@@ -27,6 +28,7 @@ import { FilterModule } from "./filter/filter.module";
             useValue: { APITOKEN: "DYNAMIC-MODULE2" },
          },
       ]),
+      OptionalModule,
    ],
    controllers: [AppController],
    providers: [

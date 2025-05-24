@@ -27,4 +27,8 @@ dist-ssr
 
 # Others
 nest-application copy.ts
+nest-application copy 2.ts
 nest-application2.ts
+nest-application1.ts
+
+**/*.gitignore

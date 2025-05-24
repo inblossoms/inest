@@ -11,16 +11,6 @@ export const MESSAGES = {
       "app.listen() needs to be called before calling app.getUrl()",
 };
 
-export const ROUTES_MESSAGES = {
-   ROUTES_REGISTERED: `Routes registered`,
-   INITIALIZING_ROUTES: `Exploring and registering routes...`,
-};
-
-export const CONTROLLERS_MESSAGES = {
-   INITIALIZING_CONTROLLERS: `Initializing controllers...`,
-   CONTROLLERS_INITIALIZED: `Controllers initialized`,
-};
-
 export const MIDDLEWARE_MESSAGES = {
    MIDDLEWARE_INITIALIZED: `Middleware initialized`,
    INITIALIZING_MIDDLEWARE: `Initializing middleware...`,
