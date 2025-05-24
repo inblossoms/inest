@@ -4,9 +4,12 @@ import {
    HttpException,
    HttpStatus,
 } from "@/packages/common/index";
+import { ProductsService } from "../products/products.service";
 
 @Controller("filter")
 export class FilterController {
+   constructor(private readonly productsService: ProductsService) {}
+
    @Get("http-exception")
    getHttpException() {
       console.log("FilterController: getHttpException");
@@ -39,5 +42,10 @@ export class FilterController {
          },
          HttpStatus.INTERNAL_SERVER_ERROR
       );
+   }
+
+   @Get("products")
+   getProducts() {
+      return this.productsService.products("Test Product from Filter");
    }
 }

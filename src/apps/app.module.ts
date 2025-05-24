@@ -8,11 +8,11 @@ import { DatabaseModule as DynamicModule } from "./dynamic/dynamic-config.module
 import { AppSerivce } from "./app.service";
 import { AppController } from "./app.controller"; // router
 import { RequestMethod } from "@/packages/common/enums";
-import { ProductsService } from "./products/products.service";
 import { InjectableService } from "./others/injectable-service";
 import { functionMiddleware } from "./others/function.middleware";
 import { FilterModule } from "./filter/filter.module";
 import { OptionalModule } from "./others/optional/optional.module";
+import { ProductsModule } from "./products/products.module";
 
 @Module({
    imports: [
@@ -29,6 +29,7 @@ import { OptionalModule } from "./others/optional/optional.module";
          },
       ]),
       OptionalModule,
+      ProductsModule,
    ],
    controllers: [AppController],
    providers: [
@@ -38,7 +39,6 @@ import { OptionalModule } from "./others/optional/optional.module";
          useClass: AppSerivce,
       },
       DynamicSerivce,
-      ProductsService,
       InjectableService,
    ],
 })
