@@ -4,6 +4,8 @@ import {
    SELF_DECLARED_DEPS_METADATA,
 } from "../../common/constants";
 import { ModuleRegistry } from "../modules/module-registry";
+import { Logger } from "../logger-server";
+import { Provider as IProvider } from "@/packages/common/interfaces/modules/provider.interface";
 
 interface Provider {
    provide: any;
@@ -11,6 +13,14 @@ interface Provider {
    useValue?: any;
    useFactory?: (...args: any[]) => any;
    useExisting?: any;
+   inject?: any[];
+}
+
+interface FilterProvider {
+   provide: any;
+   useClass?: any;
+   useValue?: any;
+   useFactory?: (...args: any[]) => any;
    inject?: any[];
 }
 
@@ -24,7 +34,7 @@ interface Provider {
  */
 export class ProviderCollector {
    /** 提供者实例映射表 provider[token]: instance */
-   private readonly Modules = new Map<any, any>();
+   private readonly providers = new Map<any, any>();
 
    constructor(private readonly moduleRegistry: ModuleRegistry) {}
 
@@ -45,10 +55,10 @@ export class ProviderCollector {
 
       // 如果 provider 已经处理过（被收集），直接返回
       if (
-         this.Modules.has(providerToken) &&
+         this.providers.has(providerToken) &&
          (typeof provider !== "object" ||
             !("useValue" in provider) ||
-            this.Modules.get(providerToken) !== undefined)
+            this.providers.get(providerToken) !== undefined)
       ) {
          return;
       }
@@ -62,10 +72,10 @@ export class ProviderCollector {
          );
          try {
             const inst = new provider(...providerDependencies);
-            this.Modules.set(providerToken, inst);
+            this.providers.set(providerToken, inst);
          } catch (error) {
             console.error(`实例化类 ${String(providerToken)} 时出错:`, error);
-            this.Modules.set(providerToken, null);
+            this.providers.set(providerToken, null);
          }
       } else if (isObject(provider) && "provide" in provider) {
          // 处理对象形式的提供者定义
@@ -81,17 +91,17 @@ export class ProviderCollector {
                const inst = new (provider as Provider).useClass(
                   ...providerDependencies
                );
-               this.Modules.set(token, inst);
+               this.providers.set(token, inst);
             } catch (error) {
                console.error(
                   `Error instantiating useClass provider ${String(token)}:`,
                   error
                );
-               this.Modules.set(token, null);
+               this.providers.set(token, null);
             }
          } else if ((provider as Provider).useValue !== undefined) {
             // useValue provider
-            this.Modules.set(token, (provider as Provider).useValue);
+            this.providers.set(token, (provider as Provider).useValue);
          } else if ((provider as Provider).useFactory) {
             // useFactory provider
             const injects = (provider as Provider).inject ?? [];
@@ -106,7 +116,7 @@ export class ProviderCollector {
                if (instance instanceof Promise) {
                   instance
                      .then((resolvedInstance) => {
-                        this.Modules.set(token, resolvedInstance);
+                        this.providers.set(token, resolvedInstance);
                      })
                      .catch((error) => {
                         console.error(
@@ -115,31 +125,31 @@ export class ProviderCollector {
                            )}:`,
                            error
                         );
-                        this.Modules.set(token, null);
+                        this.providers.set(token, null);
                      });
                } else {
-                  this.Modules.set(token, instance);
+                  this.providers.set(token, instance);
                }
             } catch (error) {
                console.error(
                   `Error executing useFactory provider ${String(token)}:`,
                   error
                );
-               this.Modules.set(token, null);
+               this.providers.set(token, null);
             }
          } else if ((provider as Provider).useExisting) {
             // 处理 useExisting 类型的提供者
             const existingProvider = this.resolveProvider(
                (provider as Provider).useExisting
             );
-            this.Modules.set(token, existingProvider);
+            this.providers.set(token, existingProvider);
          } else {
             // 处理未指定类型的提供者
             console.warn(
                `Provider ${String(token)} has no use* property`,
                provider
             );
-            this.Modules.set(token, token);
+            this.providers.set(token, token);
          }
       } else {
          // 处理意外的提供者定义
@@ -193,9 +203,9 @@ export class ProviderCollector {
     * @returns 解析后的提供者实例或值
     */
    public resolveProvider(token: any): any {
-      // 1. 检查本地 Modules 映射
-      if (this.Modules.has(token)) {
-         return this.Modules.get(token);
+      // 1. 检查本地 providers 映射
+      if (this.providers.has(token)) {
+         return this.providers.get(token);
       }
 
       // 2. 通过 ModuleRegistry 查找提供者定义
@@ -204,8 +214,8 @@ export class ProviderCollector {
 
       if (providerDefinition) {
          this.collectProviders(providerDefinition);
-         if (this.Modules.has(token)) {
-            return this.Modules.get(token);
+         if (this.providers.has(token)) {
+            return this.providers.get(token);
          }
       }
 
@@ -226,7 +236,48 @@ export class ProviderCollector {
     * @param token - 提供者令牌
     * @returns 已收集的提供者实例或值
     */
-   public getProvider(token: any): any | undefined {
-      return this.Modules.get(token);
+   public getProvider(provider: any): any | undefined {
+      return this.providers.get(provider);
+   }
+
+   public getProvidersByToken(token: string | symbol) {
+      const providers: any[] = [];
+      for (const [key, value] of this.providers.entries()) {
+         if (key === token) {
+            providers.push(value);
+         }
+      }
+      return providers;
+   }
+
+   public collectProvider(provider: FilterProvider, module: any) {
+      if (provider.provide && provider.useClass) {
+         const dependencies = this.getProviderDependencies(
+            provider.useClass,
+            provider.provide
+         );
+         const instance = new provider.useClass(...dependencies);
+         this.providers.set(provider.provide, instance);
+         Logger.log(
+            `Collected provider: ${provider.useClass.name}`,
+            "ProviderCollector"
+         );
+      } else if (provider.provide && provider.useValue) {
+         this.providers.set(provider.provide, provider.useValue);
+         Logger.log(
+            `Collected value provider: ${provider.provide.toString()}`,
+            "ProviderCollector"
+         );
+      } else if (provider.provide && provider.useFactory) {
+         const dependencies = provider.inject
+            ? provider.inject.map((token) => this.getProvider(token))
+            : [];
+         const instance = provider.useFactory(...dependencies);
+         this.providers.set(provider.provide, instance);
+         Logger.log(
+            `Collected factory provider: ${provider.provide.toString()}`,
+            "ProviderCollector"
+         );
+      }
    }
 }

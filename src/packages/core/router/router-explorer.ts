@@ -46,12 +46,22 @@ export class RouterExplorer {
     * @param module - 包含控制器的模块
     */
    public explore(module: any) {
+      // 获取当前模块的控制器
       const controllers =
          Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, module) || [];
 
-      // 从根模块开始，探索并注册所有控制器的路由
+      // 获取导入的模块
+      const imports =
+         Reflect.getMetadata(MODULE_METADATA.IMPORTS, module) || [];
+
+      // 注册当前模块的控制器路由
       for (const Controller of controllers) {
          this.registerControllerRoutes(Controller);
+      }
+
+      // 递归处理导入模块的控制器
+      for (const importedModule of imports) {
+         this.explore(importedModule);
       }
 
       Logger.log(`Routes explored and registered`, "RouterExplorer");

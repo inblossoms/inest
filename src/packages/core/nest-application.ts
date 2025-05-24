@@ -10,6 +10,8 @@ import { Logger } from "./logger-server";
 import { ControllerRegistry } from "./controllers/controller-registry";
 import { ExceptionFilterManager } from "./exceptions/exception-filter-manager";
 import { ExternalExceptionFilter } from "./exceptions/external-exception-filter";
+import { FilterManager } from "./exceptions/filter-manager";
+import { APP_FILTER } from "./constants";
 
 /**
  * NestApplication 类
@@ -37,6 +39,8 @@ export class NestApplication {
    private readonly exceptionFilterManager: ExceptionFilterManager;
    /** 外部异常过滤器 */
    private readonly externalExceptionFilter = new ExternalExceptionFilter();
+   /** 过滤器管理器实例 */
+   private readonly filterManager: FilterManager;
 
    /**
     * 创建新的 NestApplication 实例
@@ -57,6 +61,12 @@ export class NestApplication {
          this.providerCollector.getProviderDependencies.bind(
             this.providerCollector
          )
+      );
+
+      // Initialize filter manager
+      this.filterManager = new FilterManager(
+         this.providerCollector,
+         this.exceptionFilterManager
       );
 
       // Initialize controller registry with exception filter manager
@@ -100,6 +110,9 @@ export class NestApplication {
     */
    private async initMiddleware() {
       await this.moduleRegistry.registerModule(this.module);
+
+      // Initialize filters
+      this.filterManager.initializeFilters();
 
       this.middlewareManager = new MiddlewareManager(
          this.app,

@@ -11,10 +11,12 @@ import { RequestMethod } from "@/packages/common/enums";
 import { ProductsService } from "./products/products.service";
 import { InjectableService } from "./others/injectable-service";
 import { functionMiddleware } from "./others/function.middleware";
+import { FilterModule } from "./filter/filter.module";
 
 @Module({
    imports: [
       UserModule,
+      FilterModule,
       DynamicModule.forRoot([
          {
             provide: "DYNAMIC-MODULE1",
