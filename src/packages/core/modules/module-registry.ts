@@ -44,7 +44,7 @@ export class ModuleRegistry {
     */
    public async registerModule(module: any, ...parentModules: any[]) {
       if (!this.providerCollector) {
-         throw new Error("ProviderCollector not initialized");
+         Logger.error("ProviderCollector not initialized");
       }
 
       // 处理动态模块
@@ -122,20 +122,16 @@ export class ModuleRegistry {
                isObject(provider) && "provide" in provider
                   ? provider.provide
                   : provider;
-            this.registerProviderInModules(provider, isGlobalProviderModule, [
-               module,
-            ]);
+            this.registerProviderInModules(
+               providerToken,
+               isGlobalProviderModule,
+               [module]
+            );
          } catch (error) {
-            const providerToken =
-               typeof provider === "object" &&
-               provider !== null &&
-               "provide" in provider
-                  ? provider.provide
-                  : provider;
             Logger.error(
-               `处理提供者 ${String(providerToken)} 在模块 ${
-                  module.name ?? "未知模块"
-               } 中时出错:`,
+               `Processing provider ${String(provider)} in module ${
+                  module.name ?? "Unknown module"
+               } : `,
                error instanceof Error ? error.stack : String(error),
                "ModuleRegistry"
             );

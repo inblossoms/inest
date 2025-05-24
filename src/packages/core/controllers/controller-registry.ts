@@ -23,7 +23,7 @@ export class ControllerRegistry {
     */
    public async initializeControllers(controllers: any[]) {
       if (!this.providerCollector) {
-         throw new Error("ProviderCollector not initialized");
+         Logger.error("ProviderCollector not initialized");
       }
 
       for (const controller of controllers) {
@@ -34,9 +34,10 @@ export class ControllerRegistry {
                )}`,
                "ControllerRegistry"
             );
+            // provider 的依赖注入
             await this.providerCollector.collectProviders(controller);
 
-            // 新增：收集并注册控制器和方法上的异常过滤器
+            // 控制器的收集注册
             if (this.exceptionFilterManager) {
                // 控制器级过滤器
                const controllerExceptionFilters =

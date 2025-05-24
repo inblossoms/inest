@@ -1,13 +1,11 @@
 import { ExceptionFilter } from "../../common/interfaces/exceptions/exception-filter.interface";
 import { FILTER_CATCH_EXCEPTIONS } from "../../common/constants";
-import { Provider } from "../../common/interfaces/modules/provider.interface";
 import { Type } from "../../common/interfaces/type.interface";
 import { Logger } from "../logger-server";
 
 export class ExceptionFilterManager {
    private readonly exceptionFilters: ExceptionFilter[] = [];
    private globalExceptionFilters = new Set<ExceptionFilter>();
-   private readonly defaultGlobalExceptionFilters = new Set<ExceptionFilter>();
 
    constructor(
       private readonly getProviderDependencies: (provider: Type<any>) => any[]
@@ -176,7 +174,7 @@ export class ExceptionFilterManager {
          "ExceptionFilterManager"
       );
       return {
-         exceptions: exceptions,
+         exceptions,
       };
    }
 

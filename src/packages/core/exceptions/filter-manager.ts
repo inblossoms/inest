@@ -1,5 +1,4 @@
 import { APP_FILTER } from "../constants";
-import { ExceptionFilter } from "@/packages/common/interfaces/exceptions/exception-filter.interface";
 import { ProviderCollector } from "../providers/provider-collector";
 import { Logger } from "../logger-server";
 
