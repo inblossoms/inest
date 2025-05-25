@@ -16,14 +16,6 @@ interface Provider {
    inject?: any[];
 }
 
-interface FilterProvider {
-   provide: any;
-   useClass?: any;
-   useValue?: any;
-   useFactory?: (...args: any[]) => any;
-   inject?: any[];
-}
-
 /**
  * 提供者收集器类
  * 负责：
@@ -52,16 +44,6 @@ export class ProviderCollector {
          isObject(provider) && "provide" in provider
             ? provider.provide
             : provider;
-
-      // 如果 provider 已经处理过（被收集），直接返回
-      if (
-         this.providers.has(providerToken) &&
-         (typeof provider !== "object" ||
-            !("useValue" in provider) ||
-            this.providers.get(providerToken) !== undefined)
-      ) {
-         return;
-      }
 
       // 处理不同类型的提供者
       if (isModule(provider)) {

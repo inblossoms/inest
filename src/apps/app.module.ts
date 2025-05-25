@@ -40,6 +40,10 @@ import { ProductsModule } from "./products/products.module";
       },
       DynamicSerivce,
       InjectableService,
+      {
+         provide: "EXISTING_SERVICE",
+         useExisting: AppSerivce,
+      },
    ],
 })
 // export class AppModule {}

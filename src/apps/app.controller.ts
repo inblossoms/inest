@@ -25,12 +25,18 @@ export class AppController {
       private readonly productsService: ProductsService,
       @Inject("HOBBYSERVICE") private readonly hobbyService: HobbyService,
       @Inject("USERSERVICE") private readonly userService: UserSerivce,
-      @Inject("META") private readonly meta: string
+      @Inject("META") private readonly meta: string,
+      @Inject("EXISTING_SERVICE") private readonly existingservice: AppSerivce
    ) {}
 
    @Get("hello")
    getHello() {
-      return this.appService.getHello();
+      return this.appService.getHello("Root");
+   }
+
+   @Get("existing")
+   getExisting() {
+      return this.existingservice.getHello("Existing");
    }
 
    @Get("news")

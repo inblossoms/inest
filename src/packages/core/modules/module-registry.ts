@@ -97,7 +97,7 @@ export class ModuleRegistry {
       for (const moduleOrProvide of moduleExports) {
          try {
             if (!isModule(moduleOrProvide)) {
-               const moduleProvider = importedProviders.find((provider) => {
+               const moduleProviders = importedProviders.filter((provider) => {
                   const providerToken =
                      typeof provider === "object" &&
                      provider !== null &&
@@ -106,6 +106,11 @@ export class ModuleRegistry {
                         : provider;
                   return providerToken === moduleOrProvide;
                });
+
+               const moduleProvider = this.getLastProvidedDefinition(
+                  moduleProviders,
+                  moduleOrProvide
+               );
 
                if (moduleProvider) {
                   // 如果是全局模块，添加到全局提供者集合
@@ -330,51 +335,46 @@ export class ModuleRegistry {
    }
 
    /**
-    * 在模块链中查找提供者
-    * 按照优先级顺序查找：
-    * 1. 当前模块
-    * 2. 导入的模块
-    * 3. 全局提供者
-    * @param token - 提供者令牌
-    * @param module - 当前模块
-    * @returns 找到的提供者定义
+    * 从提供者数组中查找指定 token 的最晚（最后定义）的提供者对象。
+    *
+    * @param providers 提供者数组。
+    * @param token 要查找的 provide token。
+    * @returns 匹配的最晚提供者对象，如果未找到则返回 undefined。
     */
-   public findProviderInModuleChain(token: any, module: any): any {
-      console.log("ModuleProviders: ", this.ModuleProviders);
-      console.log("GlobalProviders: ", this.GlobalProviders);
-      console.log("providerDefinitions: ", this.providerDefinitions);
+   private getLastProvidedDefinition(
+      providers: Provider[],
+      token: string | symbol | Function
+   ): Provider | undefined {
+      let lastProviderDefinition: Provider | undefined = undefined;
 
-      // 1. 检查当前模块的提供者定义
-      const currentModuleProviders = this.ModuleProviders.get(module);
-      if (currentModuleProviders?.has(token)) {
-         const providerDefinition = this.providerDefinitions.get(token);
-         if (providerDefinition) {
-            return providerDefinition;
+      // 从后往前遍历数组，找到所有匹配 token 的提供者
+      // NestJS 的解析逻辑是数组中后声明的提供者会覆盖前声明的。
+      for (let i = providers.length - 1; i >= 0; i--) {
+         const provider = providers[i];
+
+         // 情况 1: 如果提供者是一个类（简写形式 for useClass）
+         // 例如: providers: [MyService]
+         if (typeof provider === "function" && provider === token) {
+            // 如果 token 就是这个函数（类本身），那么它就是匹配的提供者
+            // 这种情况下，我们直接返回这个类本身作为定义
+            lastProviderDefinition = provider;
+            break; // 找到最晚出现的就退出
          }
-      }
 
-      // 2. 检查导入的模块
-      const moduleImports =
-         Reflect.getMetadata(MODULE_METADATA.IMPORTS, module) ?? [];
-      for (const importedModule of moduleImports) {
-         const importedModuleProviders =
-            this.ModuleProviders.get(importedModule);
-         if (importedModuleProviders?.has(token)) {
-            const providerDefinition = this.providerDefinitions.get(token);
-            if (providerDefinition) {
-               return providerDefinition;
+         // 情况 2: 如果提供者是一个对象字面量（完整形式）
+         // 例如: { provide: 'TOKEN', useValue: ... } 或 { provide: Class, useClass: ... }
+         if (
+            typeof provider === "object" &&
+            provider !== null &&
+            "provide" in provider
+         ) {
+            if (provider.provide === token) {
+               // 找到了匹配的 provide token
+               lastProviderDefinition = provider;
+               break; // 找到最晚出现的就退出
             }
          }
       }
-
-      // 3. 检查全局提供者
-      if (this.GlobalProviders.has(token)) {
-         const providerDefinition = this.providerDefinitions.get(token);
-         if (providerDefinition) {
-            return providerDefinition;
-         }
-      }
-
-      return undefined;
+      return lastProviderDefinition;
    }
 }

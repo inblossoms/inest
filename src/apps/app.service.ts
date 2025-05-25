@@ -7,9 +7,9 @@ export class AppSerivce {
       private people: string
    ) {}
 
-   getHello() {
+   getHello(meta: string) {
       console.log("APPSERVICE: gethello.", this.people);
 
-      return "APPSERVICE: gethello.";
+      return `APPSERVICE: gethello > ${meta}`;
    }
 }

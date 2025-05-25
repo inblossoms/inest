@@ -8,35 +8,35 @@ import {
    REDIRECT_METADATA,
 } from "../../constants";
 
-export function Get(path: string = ""): MethodDecorator {
-   return function <T>(
-      target: Object,
-      propertyKey: string | symbol,
-      descriptor: TypedPropertyDescriptor<T>
-   ) {
-      Reflect.defineMetadata(PATH_METADATA, path, descriptor.value);
-      Reflect.defineMetadata(
-         METHOD_METADATA,
-         RequestMethod.GET,
-         descriptor.value
-      );
-   };
-}
+// export function Get(path: string = ""): MethodDecorator {
+//    return function <T>(
+//       target: Object,
+//       propertyKey: string | symbol,
+//       descriptor: TypedPropertyDescriptor<T>
+//    ) {
+//       Reflect.defineMetadata(PATH_METADATA, path, descriptor.value);
+//       Reflect.defineMetadata(
+//          METHOD_METADATA,
+//          RequestMethod.GET,
+//          descriptor.value
+//       );
+//    };
+// }
 
-export function Post(path: string = ""): MethodDecorator {
-   return function <T>(
-      target: Object,
-      propertyKey: string | symbol,
-      descriptor: TypedPropertyDescriptor<T>
-   ) {
-      Reflect.defineMetadata(PATH_METADATA, path, descriptor.value);
-      Reflect.defineMetadata(
-         METHOD_METADATA,
-         RequestMethod.POST,
-         descriptor.value
-      );
-   };
-}
+// export function Post(path: string = ""): MethodDecorator {
+//    return function <T>(
+//       target: Object,
+//       propertyKey: string | symbol,
+//       descriptor: TypedPropertyDescriptor<T>
+//    ) {
+//       Reflect.defineMetadata(PATH_METADATA, path, descriptor.value);
+//       Reflect.defineMetadata(
+//          METHOD_METADATA,
+//          RequestMethod.POST,
+//          descriptor.value
+//       );
+//    };
+// }
 
 export function Redirect(
    url: string = "/",
