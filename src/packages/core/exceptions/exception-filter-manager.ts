@@ -12,14 +12,6 @@ export class ExceptionFilterManager {
    ) {}
 
    public addExceptionFilter(filter: ExceptionFilter | Type<ExceptionFilter>) {
-      Logger.log(
-         `Adding exception filter: ${
-            typeof filter === "function"
-               ? filter.name
-               : filter.constructor?.name
-         }`,
-         "ExceptionFilterManager"
-      );
       if (typeof filter === "function") {
          const dependencies = this.getProviderDependencies(filter);
          const instance = new (filter as any)(...dependencies);
@@ -31,20 +23,12 @@ export class ExceptionFilterManager {
          );
       } else {
          this.exceptionFilters.unshift(filter);
-         Logger.log(
-            `Added existing filter instance: ${filter.constructor.name}`,
-            "ExceptionFilterManager"
-         );
       }
    }
 
    public addGlobalFilters(
       ...filters: (ExceptionFilter | Type<ExceptionFilter>)[]
    ) {
-      Logger.log(
-         `Adding global filters: ${filters.length}`,
-         "ExceptionFilterManager"
-      );
       const instantiatedFilters = filters.map((filter) => {
          if (typeof filter === "function") {
             const dependencies = this.getProviderDependencies(filter);
@@ -56,10 +40,6 @@ export class ExceptionFilterManager {
             );
             return instance;
          }
-         Logger.log(
-            `Added existing global filter: ${filter.constructor.name}`,
-            "ExceptionFilterManager"
-         );
          return filter;
       });
 

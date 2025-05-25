@@ -12,10 +12,6 @@ export class FilterManager {
       const globalFilters =
          this.providerCollector.getProvidersByToken(APP_FILTER);
       if (globalFilters.length > 0) {
-         Logger.log(
-            `Found ${globalFilters.length} global filters`,
-            "FilterManager"
-         );
          this.exceptionFilterManager.addGlobalFilters(...globalFilters);
       }
    }

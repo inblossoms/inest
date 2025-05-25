@@ -340,6 +340,10 @@ export class ModuleRegistry {
     * @returns 找到的提供者定义
     */
    public findProviderInModuleChain(token: any, module: any): any {
+      console.log("ModuleProviders: ", this.ModuleProviders);
+      console.log("GlobalProviders: ", this.GlobalProviders);
+      console.log("providerDefinitions: ", this.providerDefinitions);
+
       // 1. 检查当前模块的提供者定义
       const currentModuleProviders = this.ModuleProviders.get(module);
       if (currentModuleProviders?.has(token)) {
