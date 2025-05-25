@@ -277,23 +277,4 @@ export class ProviderCollector {
       }
       return providers;
    }
-
-   public collectProvider(provider: FilterProvider, module: any) {
-      if (provider.provide && provider.useClass) {
-         const dependencies = this.getProviderDependencies(
-            provider.useClass,
-            provider.provide
-         );
-         const instance = new provider.useClass(...dependencies);
-         this.providers.set(provider.provide, instance);
-      } else if (provider.provide && provider.useValue) {
-         this.providers.set(provider.provide, provider.useValue);
-      } else if (provider.provide && provider.useFactory) {
-         const dependencies = provider.inject
-            ? provider.inject.map((token) => this.getProvider(token))
-            : [];
-         const instance = provider.useFactory(...dependencies);
-         this.providers.set(provider.provide, instance);
-      }
-   }
 }
